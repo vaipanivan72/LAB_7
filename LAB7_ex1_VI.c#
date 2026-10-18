@@ -1,0 +1,305 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace LAB7_Variant4
+{
+    // Клас Product реалізує IComparable та IComparer
+    public class Product : IComparable<Product>, IComparer<Product>
+    {
+        public int Code { get; set; }
+        public string Name { get; set; }
+        public string Material { get; set; }
+        public double Weight { get; set; }
+        public decimal Price { get; set; }
+        public int Quality { get; set; }
+
+        public Product() { }
+
+        public Product(int code, string name, string material,
+            double weight, decimal price, int quality)
+        {
+            if (weight <= 0)
+                throw new ArgumentException(
+                    "Вага повинна бути більшою за 0.");
+
+            if (price <= 0)
+                throw new ArgumentException(
+                    "Ціна повинна бути більшою за 0.");
+
+            if (quality < 1 || quality > 5)
+                throw new ArgumentException(
+                    "Якість повинна бути від 1 до 5.");
+
+            Code = code;
+            Name = name;
+            Material = material;
+            Weight = weight;
+            Price = price;
+            Quality = quality;
+        }
+
+        // IComparable: порівняння за вагою
+        public int CompareTo(Product other)
+        {
+            if (other == null)
+                return 1;
+
+            return Weight.CompareTo(other.Weight);
+        }
+
+        // IComparer: порівняння за ціною
+        public int Compare(Product first, Product second)
+        {
+            if (first == null && second == null)
+                return 0;
+
+            if (first == null)
+                return -1;
+
+            if (second == null)
+                return 1;
+
+            return first.Price.CompareTo(second.Price);
+        }
+
+        // Форматування рядка таблиці
+        public override string ToString()
+        {
+            return $"| {Code,-4} | {Name,-17} | {Material,-12} | " +
+                   $"{Weight,8:F2} | {Price,10:F2} | {Quality,6}/5 |";
+        }
+    }
+
+    // IComparer: порівняння за якістю
+    public class QualityComparer : IComparer<Product>
+    {
+        public int Compare(Product first, Product second)
+        {
+            if (first == null && second == null)
+                return 0;
+
+            if (first == null)
+                return -1;
+
+            if (second == null)
+                return 1;
+
+            return first.Quality.CompareTo(second.Quality);
+        }
+    }
+
+    // IComparer: порівняння за ціною
+    public class PriceComparer : IComparer<Product>
+    {
+        public int Compare(Product first, Product second)
+        {
+            if (first == null && second == null)
+                return 0;
+
+            if (first == null)
+                return -1;
+
+            if (second == null)
+                return 1;
+
+            return first.Price.CompareTo(second.Price);
+        }
+    }
+
+    // Клас каталогу реалізує IEnumerable
+    public class ProductCatalog : IEnumerable<Product>
+    {
+        private readonly Product[] products;
+
+        public ProductCatalog(Product[] list)
+        {
+            products = list ??
+                throw new ArgumentNullException(nameof(list));
+        }
+
+        public IEnumerator<Product> GetEnumerator()
+        {
+            foreach (Product product in products.OrderBy(p => p.Price))
+            {
+                yield return product;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    internal class Program
+    {
+        // Межа таблиці
+        static void ShowTableLine()
+        {
+            Console.WriteLine(
+                "+------+-------------------+--------------+----------+------------+---------+");
+        }
+
+        // Заголовок таблиці українською
+        static void ShowTableHeader()
+        {
+            ShowTableLine();
+
+            Console.WriteLine(
+                "| Код  | Назва             | Матеріал     | Вага (кг)| Ціна (грн) | Якість  |");
+
+            ShowTableLine();
+        }
+
+        // Виведення виробів у таблиці
+        static void ShowProducts(IEnumerable<Product> list)
+        {
+            ShowTableHeader();
+
+            foreach (Product product in list)
+            {
+                Console.WriteLine(product);
+            }
+
+            ShowTableLine();
+        }
+
+        static void Main(string[] args)
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.InputEncoding = Encoding.UTF8;
+
+            try
+            {
+                Product[] products =
+                {
+                    new Product(1, "Стіл", "Дерево", 12.5, 4500, 5),
+                    new Product(2, "Стілець", "Дерево", 4.2, 1800, 4),
+                    new Product(3, "Чашка", "Кераміка", 0.35, 250, 4),
+                    new Product(4, "Лампа", "Метал", 1.8, 1200, 3),
+                    new Product(5, "Шафа", "Дерево", 45.0, 12500, 5),
+                    new Product(6, "Полиця", "ДСП", 6.5, 950, 3),
+                    new Product(7, "Ваза", "Скло", 1.2, 600, 4),
+                    new Product(8, "Дзеркало", "Скло", 3.4, 2200, 5),
+                    new Product(9, "Каструля", "Метал", 1.5, 800, 4),
+                    new Product(10, "Годинник", "Пластик", 0.6, 500, 2)
+                };
+
+                ProductCatalog catalog = new ProductCatalog(products);
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    Console.WriteLine(
+                        "+------------------------------------------------+");
+                    Console.WriteLine(
+                        "|             ЛАБОРАТОРНА РОБОТА № 7             |");
+                    Console.WriteLine(
+                        "|             ВБУДОВАНІ ІНТЕРФЕЙСИ C#            |");
+                    Console.WriteLine(
+                        "+------------------------------------------------+");
+                    Console.WriteLine(
+                        "| 1. Вивести всі вироби                           |");
+                    Console.WriteLine(
+                        "| 2. Сортувати за вагою (IComparable)             |");
+                    Console.WriteLine(
+                        "| 3. Сортувати за ціною (IComparer)               |");
+                    Console.WriteLine(
+                        "| 4. Сортувати за якістю (IComparer)              |");
+                    Console.WriteLine(
+                        "| 5. Каталог за ціною (IEnumerable)               |");
+                    Console.WriteLine(
+                        "| 0. Вихід                                        |");
+                    Console.WriteLine(
+                        "+------------------------------------------------+");
+                    Console.Write("Ваш вибір: ");
+
+                    string choice = Console.ReadLine();
+
+                    if (choice == "0")
+                        break;
+
+                    Console.WriteLine();
+
+                    switch (choice)
+                    {
+                        case "1":
+                            Console.WriteLine("Список усіх виробів:");
+                            ShowProducts(products);
+                            break;
+
+                        case "2":
+                            Product[] byWeight =
+                                (Product[])products.Clone();
+
+                            Array.Sort(byWeight);
+
+                            Console.WriteLine(
+                                "Список виробів, відсортований за вагою:");
+
+                            ShowProducts(byWeight);
+                            break;
+
+                        case "3":
+                            Product[] byPrice =
+                                (Product[])products.Clone();
+
+                            Array.Sort(byPrice, new PriceComparer());
+
+                            Console.WriteLine(
+                                "Список виробів, відсортований за ціною:");
+
+                            ShowProducts(byPrice);
+                            break;
+
+                        case "4":
+                            Product[] byQuality =
+                                (Product[])products.Clone();
+
+                            Array.Sort(byQuality, new QualityComparer());
+
+                            Console.WriteLine(
+                                "Список виробів, відсортований за якістю:");
+
+                            ShowProducts(byQuality);
+                            break;
+
+                        case "5":
+                            Console.WriteLine(
+                                "Каталог виробів за зростанням ціни:");
+
+                            ShowProducts(catalog);
+                            break;
+
+                        default:
+                            Console.WriteLine(
+                                "Помилка: такого пункту меню немає.");
+                            break;
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine(
+                        "Натисніть Enter, щоб повернутися в меню.");
+
+                    Console.ReadLine();
+                }
+            }
+            catch (ArgumentException error)
+            {
+                Console.WriteLine(
+                    "Помилка введення даних: " + error.Message);
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine(
+                    "Виникла помилка: " + error.Message);
+            }
+
+            Console.WriteLine("Програму завершено.");
+        }
+    }
+}
